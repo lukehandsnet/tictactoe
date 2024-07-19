@@ -1,0 +1,15 @@
+<resources>
+    <!-- Existing colors -->
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
+
+    <!-- Button colors -->
+    <color name="buttonColor">#2196F3</color>
+    <color name="buttonPressedColor">#FF9800</color>
+    <color name="buttonStrokeColor">#1976D2</color>
+    <color name="buttonStrokePressedColor">#FF5722</color>
+
+    <!-- Additional colors -->
+    <color name="white">#FFFFFF</color>
+</resources>

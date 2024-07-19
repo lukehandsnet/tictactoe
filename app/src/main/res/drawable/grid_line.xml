@@ -1,0 +1,5 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF5722"/> <!-- Bright orange color for grid lines -->
+    <corners android:radius="8dp"/> <!-- More rounded corners for grid lines -->
+</shape>
