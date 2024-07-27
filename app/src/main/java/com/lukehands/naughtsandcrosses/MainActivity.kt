@@ -1,17 +1,11 @@
-/*
- * Naughts and Crosses (Tic-Tac-Toe) game for Android
- * Developed by Luke Hands
- * Date: 2021-08-02
- */
-
 package com.lukehands.naughtsandcrosses
 
 // Import necessary classes
-
 import android.app.AlertDialog
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
-import android.widget.GridLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
@@ -22,28 +16,44 @@ class MainActivity : AppCompatActivity() {
     private val mainScope = MainScope()
     private var isAnimating = false // Flag to indicate if an animation is in progress
 
+    // Initialize MediaPlayers
+    private lateinit var dinkPlayer: MediaPlayer
+    private lateinit var donkPlayer: MediaPlayer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val gridLayout = findViewById<GridLayout>(R.id.gridLayout)
-        if (gridLayout == null) {
-            Toast.makeText(this, "Error: GridLayout not found", Toast.LENGTH_LONG).show()
-            return
+        // Initialize MediaPlayers
+        dinkPlayer = MediaPlayer.create(this, R.raw.dink)
+        donkPlayer = MediaPlayer.create(this, R.raw.donk)
+
+        if (!::dinkPlayer.isInitialized || !::donkPlayer.isInitialized) {
+            Log.e("MainActivity", "MediaPlayer initialization failed")
         }
 
-        var buttonIndex = 0
-        for (i in 0 until gridLayout.childCount) {
-            val view = gridLayout.getChildAt(i)
-            if (view is Button) {
-                val row = buttonIndex / 3
-                val col = buttonIndex % 3
-                buttonIndex++
-                view.setOnClickListener {
+        val buttons = arrayOf(
+            arrayOf(findViewById<Button>(R.id.button_00), findViewById<Button>(R.id.button_01), findViewById<Button>(R.id.button_02)),
+            arrayOf(findViewById<Button>(R.id.button_10), findViewById<Button>(R.id.button_11), findViewById<Button>(R.id.button_12)),
+            arrayOf(findViewById<Button>(R.id.button_20), findViewById<Button>(R.id.button_21), findViewById<Button>(R.id.button_22))
+        )
+
+        for (row in buttons.indices) {
+            for (col in buttons[row].indices) {
+                buttons[row][col].setOnClickListener {
                     if (!isAnimating && gameLogic.makeMove(row, col, currentPlayer)) {
                         // Update UI
                         val drawableRes = if (currentPlayer == 1) R.drawable.x else R.drawable.o
-                        view.setBackgroundResource(drawableRes)
+                        buttons[row][col].setBackgroundResource(drawableRes)
+
+                        // Play sound
+                        if (currentPlayer == 1) {
+                            Log.d("MainActivity", "Playing dink sound")
+                            dinkPlayer.start()
+                        } else {
+                            Log.d("MainActivity", "Playing donk sound")
+                            donkPlayer.start()
+                        }
 
                         if (gameLogic.checkWin(currentPlayer)) {
                             isAnimating = true
@@ -69,32 +79,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setAllButtonsToHalfTransparent() {
-        val gridLayout = findViewById<GridLayout>(R.id.gridLayout)
-        for (i in 0 until gridLayout.childCount) {
-            val view = gridLayout.getChildAt(i)
-            if (view is Button) {
-                view.alpha = 0.5f // Set transparency to 50%
+        val buttons = arrayOf(
+            arrayOf(findViewById<Button>(R.id.button_00), findViewById<Button>(R.id.button_01), findViewById<Button>(R.id.button_02)),
+            arrayOf(findViewById<Button>(R.id.button_10), findViewById<Button>(R.id.button_11), findViewById<Button>(R.id.button_12)),
+            arrayOf(findViewById<Button>(R.id.button_20), findViewById<Button>(R.id.button_21), findViewById<Button>(R.id.button_22))
+        )
+
+        for (row in buttons.indices) {
+            for (col in buttons[row].indices) {
+                buttons[row][col].alpha = 0.5f // Set transparency to 50%
             }
         }
     }
 
     private suspend fun highlightWinningLine(line: List<Pair<Int, Int>>) {
+        val buttons = arrayOf(
+            arrayOf(findViewById<Button>(R.id.button_00), findViewById<Button>(R.id.button_01), findViewById<Button>(R.id.button_02)),
+            arrayOf(findViewById<Button>(R.id.button_10), findViewById<Button>(R.id.button_11), findViewById<Button>(R.id.button_12)),
+            arrayOf(findViewById<Button>(R.id.button_20), findViewById<Button>(R.id.button_21), findViewById<Button>(R.id.button_22))
+        )
+
         repeat(5) { // Flash 5 times
             line.forEach { (row, col) ->
-                val button = findViewById<Button>(resources.getIdentifier("button_${row}${col}", "id", packageName))
-                button.alpha = 1.0f // Set transparency to 100%
+                buttons[row][col].alpha = 1.0f // Set transparency to 100%
             }
             delay(200)
             line.forEach { (row, col) ->
-                val button = findViewById<Button>(resources.getIdentifier("button_${row}${col}", "id", packageName))
-                button.alpha = 0.5f // Set transparency to 50%
+                buttons[row][col].alpha = 0.5f // Set transparency to 50%
             }
             delay(200)
         }
         // Set the winning line to fully opaque at the end
         line.forEach { (row, col) ->
-            val button = findViewById<Button>(resources.getIdentifier("button_${row}${col}", "id", packageName))
-            button.alpha = 1.0f // Set transparency to 100%
+            buttons[row][col].alpha = 1.0f // Set transparency to 100%
         }
     }
 
@@ -131,12 +148,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resetUI() {
-        val gridLayout = findViewById<GridLayout>(R.id.gridLayout)
-        for (i in 0 until gridLayout.childCount) {
-            val view = gridLayout.getChildAt(i)
-            if (view is Button) {
-                view.setBackgroundResource(android.R.color.transparent)
-                view.alpha = 1.0f // Reset transparency
+        val buttons = arrayOf(
+            arrayOf(findViewById<Button>(R.id.button_00), findViewById<Button>(R.id.button_01), findViewById<Button>(R.id.button_02)),
+            arrayOf(findViewById<Button>(R.id.button_10), findViewById<Button>(R.id.button_11), findViewById<Button>(R.id.button_12)),
+            arrayOf(findViewById<Button>(R.id.button_20), findViewById<Button>(R.id.button_21), findViewById<Button>(R.id.button_22))
+        )
+
+        for (row in buttons.indices) {
+            for (col in buttons[row].indices) {
+                buttons[row][col].setBackgroundResource(android.R.color.transparent)
+                buttons[row][col].alpha = 1.0f // Reset transparency
             }
         }
         currentPlayer = 1
@@ -144,6 +165,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        // Release MediaPlayers
+        if (::dinkPlayer.isInitialized) {
+            dinkPlayer.release()
+        }
+        if (::donkPlayer.isInitialized) {
+            donkPlayer.release()
+        }
     }
 }
 
