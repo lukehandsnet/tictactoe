@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 5px;
+            font-size: 48px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .cell.winning {
+            animation: flash 1s infinite;
+        }
+
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .reset-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .status {
+            font-size: 24px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div class="status" id="status">Player 1's turn (X)</div>
+    <div class="game-board" id="board">
+        <button class="cell" data-row="0" data-col="0"></button>
+        <button class="cell" data-row="0" data-col="1"></button>
+        <button class="cell" data-row="0" data-col="2"></button>
+        <button class="cell" data-row="1" data-col="0"></button>
+        <button class="cell" data-row="1" data-col="1"></button>
+        <button class="cell" data-row="1" data-col="2"></button>
+        <button class="cell" data-row="2" data-col="0"></button>
+        <button class="cell" data-row="2" data-col="1"></button>
+        <button class="cell" data-row="2" data-col="2"></button>
+    </div>
+    <button class="reset-btn" id="resetBtn">Reset Game</button>
+
+    <script>
+        let currentPlayer = 1;
+        const cells = document.querySelectorAll('.cell');
+        const status = document.getElementById('status');
+        const resetBtn = document.getElementById('resetBtn');
+        const dinkSound = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAASAAAcIAAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwPDw8PDw8PDw8PDw8PDw8PDw8PDw8PDxMTExMTExMTExMTExMTExMTExMTExMXFxcXFxcXFxcXFxcXFxcXFxcXFxcXGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx8fHx8fHx8fHx8fHx8fHx8fHx8fHyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMnJycnJycnJycnJycnJycnJycnJycnKysrKysrKysrKysrKysrKysrKysrKy8vLy8vLy8vLy8vLy8vLy8vLy8vLzMzMzMzMzMzMzMzMzMzMzMzMzMzMzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc//////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAQAAAAAAAAAHCAG0RLmAAAAAAAAAAAAAAAAAAAA//tgxAAHwAABpAAAACAAADSAAAAEABQWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA//tgxBmACAACpAAAACAAADSAAAAEQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA//tgxCeACAAACAAAACAAADSAAAAEQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA//tgxDaACAAACAAAACAAADSAAAAEQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA');
+        const donkSound = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAASAAAcIAAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwPDw8PDw8PDw8PDw8PDw8PDw8PDw8PDxMTExMTExMTExMTExMTExMTExMTExMXFxcXFxcXFxcXFxcXFxcXFxcXFxcXGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx8fHx8fHx8fHx8fHx8fHx8fHx8fHyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMnJycnJycnJycnJycnJycnJycnJycnKysrKysrKysrKysrKysrKysrKysrKy8vLy8vLy8vLy8vLy8vLy8vLy8vLzMzMzMzMzMzMzMzMzMzMzMzMzMzMzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc//////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAQAAAAAAAAAHCAG0RLmAAAAAAAAAAAAAAAAAAAA//tgxAAHwAABpAAAACAAADSAAAAEABQWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA//tgxBmACAACpAAAACAAADSAAAAEQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA//tgxCeACAAACAAAACAAADSAAAAEQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA//tgxDaACAAACAAAACAAADSAAAAEQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA');
+
+        cells.forEach(cell => {
+            cell.addEventListener('click', () => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+
+                if (!cell.textContent) {
+                    fetch('/move', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            row: row,
+                            col: col,
+                            player: currentPlayer
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            cell.textContent = currentPlayer === 1 ? 'X' : 'O';
+                            if (currentPlayer === 1) {
+                                dinkSound.play();
+                            } else {
+                                donkSound.play();
+                            }
+
+                            if (data.status === 'win') {
+                                status.textContent = `Player ${currentPlayer} wins!`;
+                                data.winning_line.forEach(([r, c]) => {
+                                    document.querySelector(`[data-row="${r}"][data-col="${c}"]`).classList.add('winning');
+                                });
+                            } else if (data.status === 'draw') {
+                                status.textContent = "It's a draw!";
+                            } else {
+                                currentPlayer = currentPlayer === 1 ? 2 : 1;
+                                status.textContent = `Player ${currentPlayer}'s turn (${currentPlayer === 1 ? 'X' : 'O'})`;
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        resetBtn.addEventListener('click', () => {
+            fetch('/reset', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cells.forEach(cell => {
+                        cell.textContent = '';
+                        cell.classList.remove('winning');
+                    });
+                    currentPlayer = 1;
+                    status.textContent = "Player 1's turn (X)";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
