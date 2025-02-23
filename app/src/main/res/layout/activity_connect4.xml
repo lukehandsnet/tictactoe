@@ -4,18 +4,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Background Image -->
+    <!-- Space Background -->
     <ImageView
         android:id="@+id/backgroundImageView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/fairy_background"
+        android:src="@drawable/space_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Floating Planets Animation Container -->
+    <FrameLayout
+        android:id="@+id/planetsContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Game Title -->
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Space Connect 4"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="4"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Player Turn Status -->
     <TextView
         android:id="@+id/statusTextView"
         android:layout_width="wrap_content"
@@ -24,46 +53,69 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@android:color/white"
-        android:background="@drawable/button_background"
-        android:padding="8dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="@drawable/status_background"
+        android:padding="12dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/titleTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Game Board Container -->
     <androidx.cardview.widget.CardView
         android:id="@+id/boardCardView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_margin="16dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="8dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="12dp"
         app:layout_constraintTop_toBottomOf="@id/statusTextView"
         app:layout_constraintBottom_toTopOf="@id/resetButton"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintDimensionRatio="7:6">
 
+        <!-- Game Board Grid -->
         <GridLayout
             android:id="@+id/boardGridLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:columnCount="7"
             android:rowCount="6"
             android:padding="8dp"
-            android:background="@drawable/gradient_background" />
+            android:background="@drawable/board_background" />
 
     </androidx.cardview.widget.CardView>
 
+    <!-- Reset Button -->
     <Button
         android:id="@+id/resetButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Reset Game"
+        android:text="New Game"
+        android:textSize="18sp"
         android:background="@drawable/button_background"
         android:textColor="@android:color/white"
-        android:layout_marginBottom="16dp"
+        android:padding="16dp"
+        android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Orientation Guide -->
+    <TextView
+        android:id="@+id/orientationGuide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rotate device for better view"
+        android:textColor="@android:color/white"
+        android:background="@drawable/guide_background"
+        android:padding="8dp"
+        android:alpha="0.8"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/resetButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

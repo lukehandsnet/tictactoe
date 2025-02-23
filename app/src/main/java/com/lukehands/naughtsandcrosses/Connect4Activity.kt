@@ -1,22 +1,23 @@
 package com.lukehands.naughtsandcrosses
 
 import android.app.AlertDialog
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.View
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
-import android.widget.Button
-import android.widget.GridLayout
-import android.widget.ImageView
-import android.widget.TextView
+import android.view.animation.*
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
+import kotlin.random.Random
 
 class Connect4Activity : AppCompatActivity() {
     private lateinit var boardGridLayout: GridLayout
     private lateinit var statusTextView: TextView
+    private lateinit var orientationGuide: TextView
+    private lateinit var planetsContainer: FrameLayout
     private lateinit var cells: Array<Array<ImageView>>
     private lateinit var board: Array<Array<Int>>
     private var currentPlayer = 1 // 1 for red, 2 for yellow
@@ -29,6 +30,8 @@ class Connect4Activity : AppCompatActivity() {
     // Initialize MediaPlayers
     private lateinit var dinkPlayer: MediaPlayer
     private lateinit var donkPlayer: MediaPlayer
+    private lateinit var winPlayer: MediaPlayer
+    private lateinit var drawPlayer: MediaPlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,12 +40,103 @@ class Connect4Activity : AppCompatActivity() {
         // Initialize MediaPlayers
         dinkPlayer = MediaPlayer.create(this, R.raw.dink)
         donkPlayer = MediaPlayer.create(this, R.raw.donk)
+        winPlayer = MediaPlayer.create(this, R.raw.win)
+        drawPlayer = MediaPlayer.create(this, R.raw.draw)
 
         boardGridLayout = findViewById(R.id.boardGridLayout)
         statusTextView = findViewById(R.id.statusTextView)
+        orientationGuide = findViewById(R.id.orientationGuide)
+        planetsContainer = findViewById(R.id.planetsContainer)
+
         findViewById<Button>(R.id.resetButton).setOnClickListener { resetGame() }
 
+        // Start floating planets animation
+        startFloatingPlanetsAnimation()
+
         initializeBoard()
+        checkOrientation(resources.configuration.orientation)
+    }
+
+    private fun startFloatingPlanetsAnimation() {
+        mainScope.launch {
+            while (true) {
+                addFloatingPlanet()
+                delay(Random.nextLong(2000, 5000))
+            }
+        }
+    }
+
+    private fun addFloatingPlanet() {
+        val planet = ImageView(this).apply {
+            setImageResource(R.drawable.planet_${Random.nextInt(1, 5)})
+            alpha = 0.6f
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+        }
+
+        val size = Random.nextInt(40, 100)
+        val params = FrameLayout.LayoutParams(size, size)
+        
+        // Random starting position
+        val startX = Random.nextInt(-50, planetsContainer.width + 50)
+        val startY = planetsContainer.height + 100
+        
+        planet.x = startX.toFloat()
+        planet.y = startY.toFloat()
+        
+        planetsContainer.addView(planet, params)
+
+        // Create animation set
+        val animSet = AnimationSet(true).apply {
+            // Translate animation
+            val translateAnim = TranslateAnimation(
+                0f, Random.nextFloat() * 200 - 100,  // Random X movement
+                0f, -planetsContainer.height.toFloat() - 200  // Move up
+            ).apply {
+                duration = Random.nextLong(10000, 20000)
+            }
+
+            // Rotation animation
+            val rotateAnim = RotateAnimation(
+                0f, 360f,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f
+            ).apply {
+                duration = Random.nextLong(5000, 15000)
+                repeatCount = Animation.INFINITE
+            }
+
+            addAnimation(translateAnim)
+            addAnimation(rotateAnim)
+
+            setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationStart(animation: Animation?) {}
+                override fun onAnimationRepeat(animation: Animation?) {}
+                override fun onAnimationEnd(animation: Animation?) {
+                    planetsContainer.removeView(planet)
+                }
+            })
+        }
+
+        planet.startAnimation(animSet)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        checkOrientation(newConfig.orientation)
+    }
+
+    private fun checkOrientation(orientation: Int) {
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            orientationGuide.visibility = View.VISIBLE
+            orientationGuide.postDelayed({
+                orientationGuide.animate()
+                    .alpha(0f)
+                    .setDuration(500)
+                    .withEndAction { orientationGuide.visibility = View.GONE }
+            }, 3000)
+        } else {
+            orientationGuide.visibility = View.GONE
+        }
     }
 
     private fun initializeBoard() {
@@ -52,18 +146,32 @@ class Connect4Activity : AppCompatActivity() {
         for (row in 0 until ROWS) {
             for (col in 0 until COLS) {
                 val cell = ImageView(this).apply {
-                    background = ContextCompat.getDrawable(context, R.drawable.button_background)
+                    setBackgroundResource(R.drawable.cell_empty)
                     layoutParams = GridLayout.LayoutParams().apply {
-                        width = resources.displayMetrics.density.toInt() * 48
-                        height = resources.displayMetrics.density.toInt() * 48
+                        val cellSize = resources.displayMetrics.density.toInt() * 48
+                        width = cellSize
+                        height = cellSize
                         setMargins(4, 4, 4, 4)
                     }
                     tag = "$row,$col"
                     setOnClickListener { makeMove(col) }
-                    elevation = resources.displayMetrics.density * 4 // Add elevation for 3D effect
+                    elevation = resources.displayMetrics.density * 4
                 }
                 cells[row][col] = cell
                 boardGridLayout.addView(cell)
+
+                // Add entry animation
+                cell.alpha = 0f
+                cell.scaleX = 0.5f
+                cell.scaleY = 0.5f
+                cell.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setStartDelay((row * COLS + col) * 50L)
+                    .setDuration(300)
+                    .setInterpolator(OvershootInterpolator())
+                    .start()
             }
         }
         updateBoard()
@@ -75,32 +183,59 @@ class Connect4Activity : AppCompatActivity() {
         val row = getLowestEmptyRow(col)
         if (row == -1) return
 
+        isAnimating = true
         board[row][col] = currentPlayer
-        updateBoard()
 
-        // Play sound based on current player
-        if (currentPlayer == 1) {
-            dinkPlayer.start()
-        } else {
-            donkPlayer.start()
-        }
+        // Animate the piece dropping
+        val cell = cells[row][col]
+        cell.y = -cell.height.toFloat() * (row + 1)
+        cell.alpha = 1f
+        cell.setBackgroundResource(if (currentPlayer == 1) R.drawable.cell_red else R.drawable.cell_yellow)
+        
+        cell.animate()
+            .translationY(0f)
+            .setDuration(500)
+            .setInterpolator(BounceInterpolator())
+            .withEndAction {
+                isAnimating = false
+                
+                // Play sound based on current player
+                if (currentPlayer == 1) {
+                    dinkPlayer.start()
+                } else {
+                    donkPlayer.start()
+                }
 
-        if (checkWin(row, col)) {
-            isAnimating = true
-            val winningCells = getWinningCells(row, col)
-            highlightAndShowWinner(winningCells, currentPlayer)
-            gameActive = false
-            return
-        }
+                if (checkWin(row, col)) {
+                    isAnimating = true
+                    val winningCells = getWinningCells(row, col)
+                    highlightAndShowWinner(winningCells, currentPlayer)
+                    gameActive = false
+                    winPlayer.start()
+                    return@withEndAction
+                }
 
-        if (checkDraw()) {
-            showDrawDialog()
-            gameActive = false
-            return
-        }
+                if (checkDraw()) {
+                    showDrawDialog()
+                    gameActive = false
+                    drawPlayer.start()
+                    return@withEndAction
+                }
 
-        currentPlayer = if (currentPlayer == 1) 2 else 1
-        statusTextView.text = if (currentPlayer == 1) "Red's Turn" else "Yellow's Turn"
+                currentPlayer = if (currentPlayer == 1) 2 else 1
+                statusTextView.animate()
+                    .alpha(0f)
+                    .setDuration(150)
+                    .withEndAction {
+                        statusTextView.text = if (currentPlayer == 1) "Red's Turn" else "Yellow's Turn"
+                        statusTextView.animate()
+                            .alpha(1f)
+                            .setDuration(150)
+                            .start()
+                    }
+                    .start()
+            }
+            .start()
     }
 
     private fun getWinningCells(row: Int, col: Int): List<Pair<Int, Int>> {
@@ -184,10 +319,10 @@ class Connect4Activity : AppCompatActivity() {
     }
 
     private fun showWinnerDialog(player: Int) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Game Over")
-        builder.setMessage(if (player == 1) "Red Wins!" else "Yellow Wins!")
-        builder.setPositiveButton("OK") { dialog, _ ->
+        val builder = AlertDialog.Builder(this, R.style.CustomAlertDialog)
+        builder.setTitle("🎉 Game Over 🎉")
+        builder.setMessage(if (player == 1) "Red Wins! 🔴" else "Yellow Wins! 🟡")
+        builder.setPositiveButton("Play Again! 🎮") { dialog, _ ->
             dialog.dismiss()
             resetGame()
         }
@@ -197,10 +332,10 @@ class Connect4Activity : AppCompatActivity() {
     }
 
     private fun showDrawDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Game Over")
-        builder.setMessage("It's a Draw!")
-        builder.setPositiveButton("OK") { dialog, _ ->
+        val builder = AlertDialog.Builder(this, R.style.CustomAlertDialog)
+        builder.setTitle("🤝 Game Over 🤝")
+        builder.setMessage("It's a Draw! Well played! 🌟")
+        builder.setPositiveButton("Play Again! 🎮") { dialog, _ ->
             dialog.dismiss()
             resetGame()
         }
@@ -276,18 +411,60 @@ class Connect4Activity : AppCompatActivity() {
     }
 
     private fun resetGame() {
-        for (row in 0 until ROWS) {
-            for (col in 0 until COLS) {
-                board[row][col] = 0
-                cells[row][col].clearAnimation() // Clear any running animations
-                cells[row][col].alpha = 1.0f
+        // Stop all animations
+        mainScope.launch {
+            // First fade out all cells
+            for (row in 0 until ROWS) {
+                for (col in 0 until COLS) {
+                    val cell = cells[row][col]
+                    cell.clearAnimation()
+                    cell.animate()
+                        .alpha(0f)
+                        .scaleX(0.8f)
+                        .scaleY(0.8f)
+                        .setDuration(200)
+                        .setStartDelay((row * COLS + col) * 30L)
+                        .start()
+                }
+            }
+            
+            delay(500) // Wait for fade out
+
+            // Reset the game state
+            board = Array(ROWS) { Array(COLS) { 0 } }
+            currentPlayer = 1
+            gameActive = true
+            isAnimating = false
+            
+            // Update status with animation
+            statusTextView.animate()
+                .alpha(0f)
+                .setDuration(150)
+                .withEndAction {
+                    statusTextView.text = "Red's Turn"
+                    statusTextView.animate()
+                        .alpha(1f)
+                        .setDuration(150)
+                        .start()
+                }
+                .start()
+
+            // Fade in all cells with new state
+            for (row in 0 until ROWS) {
+                for (col in 0 until COLS) {
+                    val cell = cells[row][col]
+                    cell.setBackgroundResource(R.drawable.cell_empty)
+                    cell.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(300)
+                        .setStartDelay((row * COLS + col) * 50L)
+                        .setInterpolator(OvershootInterpolator())
+                        .start()
+                }
             }
         }
-        currentPlayer = 1
-        gameActive = true
-        isAnimating = false
-        statusTextView.text = "Red's Turn"
-        updateBoard()
     }
 
     override fun onDestroy() {
