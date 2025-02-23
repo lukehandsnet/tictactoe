@@ -26,6 +26,10 @@
             android:name=".TicTacToeActivity"
             android:label="Tic Tac Toe"
             android:theme="@style/Theme.AppCompat.Light" />
+        <activity
+            android:name=".Connect4Activity"
+            android:label="Connect 4"
+            android:theme="@style/Theme.AppCompat.Light" />
     </application>
 
 </manifest>

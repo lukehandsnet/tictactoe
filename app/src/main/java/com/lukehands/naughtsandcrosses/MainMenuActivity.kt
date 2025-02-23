@@ -13,5 +13,9 @@ class MainMenuActivity : AppCompatActivity() {
         findViewById<Button>(R.id.ticTacToeButton).setOnClickListener {
             startActivity(Intent(this, TicTacToeActivity::class.java))
         }
+
+        findViewById<Button>(R.id.connect4Button).setOnClickListener {
+            startActivity(Intent(this, Connect4Activity::class.java))
+        }
     }
 }

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect 4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .board {
+            background-color: #2196F3;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 20px;
+        }
+        .row {
+            display: flex;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 50%;
+            margin: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .red {
+            background-color: #f44336;
+        }
+        .yellow {
+            background-color: #ffeb3b;
+        }
+        .hover {
+            background-color: #e3f2fd;
+        }
+        #status {
+            font-size: 24px;
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Connect 4</h1>
+    <div id="status">Red's turn</div>
+    <div class="board" id="board"></div>
+    <button onclick="resetGame()">Reset Game</button>
+    <script>
+        const ROWS = 6;
+        const COLS = 7;
+        let currentPlayer = 'red';
+        let gameBoard = Array(ROWS).fill().map(() => Array(COLS).fill(''));
+        let gameActive = true;
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            for (let row = 0; row < ROWS; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+                
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', () => makeMove(col));
+                    cell.addEventListener('mouseover', () => showPreview(col));
+                    cell.addEventListener('mouseout', () => removePreview(col));
+                    rowDiv.appendChild(cell);
+                }
+                
+                board.appendChild(rowDiv);
+            }
+            updateBoard();
+        }
+
+        function updateBoard() {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.className = 'cell ' + gameBoard[row][col];
+                }
+            }
+        }
+
+        function showPreview(col) {
+            if (!gameActive) return;
+            const row = getLowestEmptyRow(col);
+            if (row !== -1) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.add('hover');
+            }
+        }
+
+        function removePreview(col) {
+            for (let row = 0; row < ROWS; row++) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.remove('hover');
+            }
+        }
+
+        function getLowestEmptyRow(col) {
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (gameBoard[row][col] === '') {
+                    return row;
+                }
+            }
+            return -1;
+        }
+
+        function makeMove(col) {
+            if (!gameActive) return;
+            
+            const row = getLowestEmptyRow(col);
+            if (row === -1) return;
+
+            gameBoard[row][col] = currentPlayer;
+            updateBoard();
+
+            if (checkWin(row, col)) {
+                document.getElementById('status').textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} wins!`;
+                gameActive = false;
+                return;
+            }
+
+            if (checkDraw()) {
+                document.getElementById('status').textContent = "It's a draw!";
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red';
+            document.getElementById('status').textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)}'s turn`;
+        }
+
+        function checkWin(row, col) {
+            const directions = [
+                [[0, 1], [0, -1]],   // Horizontal
+                [[1, 0], [-1, 0]],   // Vertical
+                [[1, 1], [-1, -1]],  // Diagonal /
+                [[1, -1], [-1, 1]]   // Diagonal \
+            ];
+
+            for (const [dir1, dir2] of directions) {
+                let count = 1;
+                count += countInDirection(row, col, dir1[0], dir1[1]);
+                count += countInDirection(row, col, dir2[0], dir2[1]);
+                if (count >= 4) return true;
+            }
+            return false;
+        }
+
+        function countInDirection(row, col, deltaRow, deltaCol) {
+            const player = gameBoard[row][col];
+            let count = 0;
+            let currentRow = row + deltaRow;
+            let currentCol = col + deltaCol;
+
+            while (
+                currentRow >= 0 && currentRow < ROWS &&
+                currentCol >= 0 && currentCol < COLS &&
+                gameBoard[currentRow][currentCol] === player
+            ) {
+                count++;
+                currentRow += deltaRow;
+                currentCol += deltaCol;
+            }
+
+            return count;
+        }
+
+        function checkDraw() {
+            return gameBoard.every(row => row.every(cell => cell !== ''));
+        }
+
+        function resetGame() {
+            gameBoard = Array(ROWS).fill().map(() => Array(COLS).fill(''));
+            currentPlayer = 'red';
+            gameActive = true;
+            document.getElementById('status').textContent = "Red's turn";
+            updateBoard();
+        }
+
+        // Initialize the game
+        createBoard();
+    </script>
+</body>
+</html>
