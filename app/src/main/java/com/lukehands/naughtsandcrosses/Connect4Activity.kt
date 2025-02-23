@@ -30,8 +30,6 @@ class Connect4Activity : AppCompatActivity() {
     // Initialize MediaPlayers
     private lateinit var dinkPlayer: MediaPlayer
     private lateinit var donkPlayer: MediaPlayer
-    private lateinit var winPlayer: MediaPlayer
-    private lateinit var drawPlayer: MediaPlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +38,6 @@ class Connect4Activity : AppCompatActivity() {
         // Initialize MediaPlayers
         dinkPlayer = MediaPlayer.create(this, R.raw.dink)
         donkPlayer = MediaPlayer.create(this, R.raw.donk)
-        winPlayer = MediaPlayer.create(this, R.raw.win)
-        drawPlayer = MediaPlayer.create(this, R.raw.draw)
 
         boardGridLayout = findViewById(R.id.boardGridLayout)
         statusTextView = findViewById(R.id.statusTextView)
@@ -68,7 +64,12 @@ class Connect4Activity : AppCompatActivity() {
 
     private fun addFloatingPlanet() {
         val planet = ImageView(this).apply {
-            setImageResource(R.drawable.planet_${Random.nextInt(1, 5)})
+            setImageResource(when (Random.nextInt(4)) {
+                0 -> R.drawable.planet_1
+                1 -> R.drawable.planet_2
+                2 -> R.drawable.planet_3
+                else -> R.drawable.planet_4
+            })
             alpha = 0.6f
             scaleType = ImageView.ScaleType.CENTER_INSIDE
         }
@@ -211,14 +212,12 @@ class Connect4Activity : AppCompatActivity() {
                     val winningCells = getWinningCells(row, col)
                     highlightAndShowWinner(winningCells, currentPlayer)
                     gameActive = false
-                    winPlayer.start()
                     return@withEndAction
                 }
 
                 if (checkDraw()) {
                     showDrawDialog()
                     gameActive = false
-                    drawPlayer.start()
                     return@withEndAction
                 }
 
