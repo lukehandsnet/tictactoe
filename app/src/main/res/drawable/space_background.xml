@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="100%p"
+                android:startColor="#1A237E"
+                android:centerColor="#0D47A1"
+                android:endColor="#000051" />
+        </shape>
+    </item>
+    <item>
+        <bitmap
+            android:src="@drawable/stars_overlay"
+            android:tileMode="repeat"
+            android:gravity="center" />
+    </item>
+</layer-list>
