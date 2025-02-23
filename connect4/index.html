@@ -10,13 +10,18 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f0f0f0;
+            background: linear-gradient(135deg, #6200EE, #03DAC5);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .board {
-            background-color: #2196F3;
-            padding: 10px;
-            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 15px;
             margin: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .row {
             display: flex;
@@ -25,36 +30,96 @@
             width: 60px;
             height: 60px;
             background-color: white;
+            border: 2px solid #1976D2;
             border-radius: 50%;
             margin: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            position: relative;
         }
         .red {
             background-color: #f44336;
+            border-color: #d32f2f;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2);
         }
         .yellow {
             background-color: #ffeb3b;
+            border-color: #fdd835;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2);
         }
         .hover {
-            background-color: #e3f2fd;
+            background-color: rgba(33, 150, 243, 0.1);
+            transform: scale(1.05);
+        }
+        .winning {
+            animation: flash 1s infinite;
+        }
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         #status {
             font-size: 24px;
             margin: 20px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
         }
         button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 18px;
-            background-color: #4CAF50;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .modal-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .modal-message {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+        .modal-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2196F3;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
         }
     </style>
 </head>
@@ -63,12 +128,22 @@
     <div id="status">Red's turn</div>
     <div class="board" id="board"></div>
     <button onclick="resetGame()">Reset Game</button>
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Game Over</div>
+            <div id="modalMessage" class="modal-message"></div>
+            <button class="modal-button" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+    <audio id="dinkSound" src="data:audio/mpeg;base64,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" type="audio/mpeg"></audio>
+    <audio id="donkSound" src="data:audio/mpeg;base64,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" type="audio/mpeg"></audio>
     <script>
         const ROWS = 6;
         const COLS = 7;
         let currentPlayer = 'red';
         let gameBoard = Array(ROWS).fill().map(() => Array(COLS).fill(''));
         let gameActive = true;
+        let isAnimating = false;
 
         function createBoard() {
             const board = document.getElementById('board');
@@ -129,7 +204,7 @@
         }
 
         function makeMove(col) {
-            if (!gameActive) return;
+            if (!gameActive || isAnimating) return;
             
             const row = getLowestEmptyRow(col);
             if (row === -1) return;
@@ -137,14 +212,27 @@
             gameBoard[row][col] = currentPlayer;
             updateBoard();
 
+            // Play sound based on current player
+            if (currentPlayer === 'red') {
+                document.getElementById('dinkSound').currentTime = 0;
+                document.getElementById('dinkSound').play();
+            } else {
+                document.getElementById('donkSound').currentTime = 0;
+                document.getElementById('donkSound').play();
+            }
+
             if (checkWin(row, col)) {
-                document.getElementById('status').textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} wins!`;
+                isAnimating = true;
+                const winningCells = getWinningCells(row, col);
+                highlightWinningCells(winningCells, () => {
+                    showGameOverModal(`${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)} wins!`);
+                });
                 gameActive = false;
                 return;
             }
 
             if (checkDraw()) {
-                document.getElementById('status').textContent = "It's a draw!";
+                showGameOverModal("It's a draw!");
                 gameActive = false;
                 return;
             }
@@ -193,11 +281,100 @@
             return gameBoard.every(row => row.every(cell => cell !== ''));
         }
 
+        function getWinningCells(row, col) {
+            const directions = [
+                [[0, 1], [0, -1]],   // Horizontal
+                [[1, 0], [-1, 0]],   // Vertical
+                [[1, 1], [-1, -1]],  // Diagonal /
+                [[1, -1], [-1, 1]]   // Diagonal \
+            ];
+
+            for (const [dir1, dir2] of directions) {
+                let cells = [[row, col]];
+                let count = 1;
+
+                // Check first direction
+                let r = row + dir1[0];
+                let c = col + dir1[1];
+                while (r >= 0 && r < ROWS && c >= 0 && c < COLS && gameBoard[r][c] === currentPlayer) {
+                    cells.push([r, c]);
+                    count++;
+                    r += dir1[0];
+                    c += dir1[1];
+                }
+
+                // Check second direction
+                r = row + dir2[0];
+                c = col + dir2[1];
+                while (r >= 0 && r < ROWS && c >= 0 && c < COLS && gameBoard[r][c] === currentPlayer) {
+                    cells.push([r, c]);
+                    count++;
+                    r += dir2[0];
+                    c += dir2[1];
+                }
+
+                if (count >= 4) {
+                    return cells;
+                }
+            }
+            return [];
+        }
+
+        function highlightWinningCells(cells, callback) {
+            const flashCount = 5;
+            let currentFlash = 0;
+
+            function flash() {
+                if (currentFlash >= flashCount * 2) {
+                    cells.forEach(([row, col]) => {
+                        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        cell.style.opacity = '1';
+                        cell.classList.add('winning');
+                    });
+                    isAnimating = false;
+                    if (callback) callback();
+                    return;
+                }
+
+                cells.forEach(([row, col]) => {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.style.opacity = currentFlash % 2 === 0 ? '0.5' : '1';
+                });
+
+                currentFlash++;
+                setTimeout(flash, 200);
+            }
+
+            flash();
+        }
+
+        function showGameOverModal(message) {
+            const modal = document.getElementById('gameOverModal');
+            const modalMessage = document.getElementById('modalMessage');
+            modalMessage.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('gameOverModal');
+            modal.style.display = 'none';
+            resetGame();
+        }
+
         function resetGame() {
             gameBoard = Array(ROWS).fill().map(() => Array(COLS).fill(''));
             currentPlayer = 'red';
             gameActive = true;
+            isAnimating = false;
             document.getElementById('status').textContent = "Red's turn";
+            
+            // Remove winning animation class from all cells
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.classList.remove('winning');
+                cell.style.opacity = '1';
+            });
+            
             updateBoard();
         }
 
